@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block title %}Submit Refund Request - Refund Destination Closed Account{% endblock %}
+
+{% block content %}
+<div style="max-width: 820px; margin: 0 auto;">
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <h2 class="card-title">Submit Refund Re-routing Request</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.25rem;">
+          Provide your transaction details and active alternative destination to resolve refunds bounced from closed accounts.
+        </p>
+      </div>
+    </div>
+
+    <!-- Security Warning Banner -->
+    <div class="security-notice">
+      <div class="security-notice-icon">
+        <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+      </div>
+      <div class="security-notice-text">
+        <h4>Confidentiality &amp; Anti-Fraud Safeguard</h4>
+        <p>
+          Do <strong>NOT</strong> enter banking PINs, passwords, OTPs, or CVV codes. We only collect public routing/destination
+          identifiers to safely process your re-routed refund after payment provider verification.
+        </p>
+      </div>
+    </div>
+
+    <!-- Live Validation Alert for Closed Account -->
+    <div id="closed_status_warning" style="display: none; background: #fee2e2; border-left: 4px solid #ef4444; padding: 0.85rem 1rem; border-radius: var(--radius-md); margin-bottom: 1.25rem; font-size: 0.9rem; color: #991b1b;">
+      ⚠️ <strong>Validation Alert:</strong> This re-routing service is strictly for accounts that are <em>closed or deactivated</em>. If your original account is active, your refund must be processed automatically by your merchant bank.
+    </div>
+
+    <form method="POST" action="{{ url_for('submit_refund') }}" id="refundForm">
+
+      <!-- SECTION 1: Customer Contact Information -->
+      <div class="form-section-title">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+        1. Customer Information
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="customer_name">Full Legal Name <span class="required">*</span></label>
+          <input type="text" class="form-control" id="customer_name" name="customer_name"
+                 placeholder="e.g. Alexander Hayes"
+                 value="{{ form_data.get('customer_name', '') }}" required>
+          <div class="form-hint">Must match the identity registered on the original order.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="email">Email Address <span class="required">*</span></label>
+          <input type="email" class="form-control" id="email" name="email"
+                 placeholder="e.g. alex.hayes@example.com"
+                 value="{{ form_data.get('email', '') }}" required>
+          <div class="form-hint">Status updates and approval notices will be sent here.</div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="phone">Contact Phone Number</label>
+          <input type="text" class="form-control" id="phone" name="phone"
+                 placeholder="e.g. +1 (555) 234-5678"
+                 value="{{ form_data.get('phone', '') }}">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="transaction_id">Original Transaction / Order ID <span class="required">*</span></label>
+          <input type="text" class="form-control" id="transaction_id" name="transaction_id"
+                 placeholder="e.g. TXN-894210"
+                 value="{{ form_data.get('transaction_id', '') }}" required>
+          <div class="form-hint">Found in your purchase receipt or return confirmation email.</div>
+        </div>
+      </div>
+
+      <!-- SECTION 2: Original Transaction & Closed Account Information -->
+      <div class="form-section-title">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+        </svg>
+        2. Original Closed Account Details
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="refund_amount">Refund Amount <span class="required">*</span></label>
+          <div style="display: flex; gap: 0.5rem;">
+            <select name="currency" id="currency" class="form-control" style="max-width: 80px;">
+              <option value="$" {% if form_data.get('currency') == '$' %}selected{% endif %}>$ USD</option>
+              <option value="₹" {% if form_data.get('currency') == '₹' %}selected{% endif %}>₹ INR</option>
+              <option value="€" {% if form_data.get('currency') == '€' %}selected{% endif %}>€ EUR</option>
+              <option value="£" {% if form_data.get('currency') == '£' %}selected{% endif %}>£ GBP</option>
+            </select>
+            <input type="number" step="0.01" min="0.01" class="form-control" id="refund_amount" name="refund_amount"
+                   placeholder="e.g. 250.00"
+                   value="{{ form_data.get('refund_amount', '') }}" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="original_method">Original Payment Method <span class="required">*</span></label>
+          <select name="original_method" id="original_method" class="form-control" required>
+            <option value="">-- Select Payment Method --</option>
+            <option value="Bank Transfer (Checking/Savings)" {% if form_data.get('original_method') == 'Bank Transfer (Checking/Savings)' %}selected{% endif %}>Bank Transfer (Checking/Savings)</option>
+            <option value="Debit Card" {% if form_data.get('original_method') == 'Debit Card' %}selected{% endif %}>Debit Card</option>
+            <option value="Credit Card" {% if form_data.get('original_method') == 'Credit Card' %}selected{% endif %}>Credit Card</option>
+            <option value="UPI / Virtual Payment" {% if form_data.get('original_method') == 'UPI / Virtual Payment' %}selected{% endif %}>UPI / Virtual Payment</option>
+            <option value="Digital Wallet" {% if form_data.get('original_method') == 'Digital Wallet' %}selected{% endif %}>Digital Wallet</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="original_bank_name">Original Bank / Card Issuer <span class="required">*</span></label>
+          <input type="text" class="form-control" id="original_bank_name" name="original_bank_name"
+                 placeholder="e.g. Apex National Bank or Chase"
+                 value="{{ form_data.get('original_bank_name', '') }}" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="original_account_last4">Original Account / Card Last 4 Digits <span class="required">*</span></label>
+          <input type="text" class="form-control" id="original_account_last4" name="original_account_last4"
+                 placeholder="e.g. 4892" maxlength="4" pattern="\d{4}"
+                 value="{{ form_data.get('original_account_last4', '') }}" required>
+          <div class="form-hint">Last 4 digits only. Never share the full account or card number.</div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="account_status">Account Status (Validation) <span class="required">*</span></label>
+          <select name="account_status" id="account_status" class="form-control" required>
+            <option value="">-- Verify Account Closed Status --</option>
+            <option value="Closed - Account Deactivated" {% if form_data.get('account_status') == 'Closed - Account Deactivated' %}selected{% endif %}>Closed - Account Deactivated</option>
+            <option value="Closed - Card Expired / Cancelled" {% if form_data.get('account_status') == 'Closed - Card Expired / Cancelled' %}selected{% endif %}>Closed - Card Expired / Cancelled</option>
+            <option value="Closed - Branch Merged & Routing Defunct" {% if form_data.get('account_status') == 'Closed - Branch Merged & Routing Defunct' %}selected{% endif %}>Closed - Branch Merged &amp; Routing Defunct</option>
+            <option value="Closed - Frozen / Inactive by Bank" {% if form_data.get('account_status') == 'Closed - Frozen / Inactive by Bank' %}selected{% endif %}>Closed - Frozen / Inactive by Bank</option>
+            <option value="Active / Open (Not Closed)" {% if form_data.get('account_status') == 'Active / Open (Not Closed)' %}selected{% endif %}>Active / Open (Not Closed)</option>
+          </select>
+          <div class="form-hint">The original account must be closed to qualify for re-routing.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="closed_account_notes">Reason for Closure / Notes</label>
+          <input type="text" class="form-control" id="closed_account_notes" name="closed_account_notes"
+                 placeholder="e.g. Relocated to another city and closed branch account in August"
+                 value="{{ form_data.get('closed_account_notes', '') }}">
+        </div>
+      </div>
+
+      <!-- SECTION 3: Alternative Refund Destination -->
+      <div class="form-section-title">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+        </svg>
+        3. Alternative Refund Destination (Replacement Account)
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="alt_method">Alternative Refund Method <span class="required">*</span></label>
+          <select name="alt_method" id="alt_method" class="form-control" required>
+            <option value="">-- Select Replacement Destination --</option>
+            <option value="New Bank Account (ACH/Direct Deposit)" {% if form_data.get('alt_method') == 'New Bank Account (ACH/Direct Deposit)' %}selected{% endif %}>New Active Bank Account (ACH / Direct Deposit / NEFT)</option>
+            <option value="UPI / Virtual Payment Address" {% if form_data.get('alt_method') == 'UPI / Virtual Payment Address' %}selected{% endif %}>UPI / Virtual Payment Address (VPA)</option>
+            <option value="Digital Wallet Transfer" {% if form_data.get('alt_method') == 'Digital Wallet Transfer' %}selected{% endif %}>Digital Wallet Transfer</option>
+            <option value="Direct Paper Cheque by Mail" {% if form_data.get('alt_method') == 'Direct Paper Cheque by Mail' %}selected{% endif %}>Direct Paper Cheque by Postal Mail</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="alt_holder_name">Alternative Account Holder Name <span class="required">*</span></label>
+          <input type="text" class="form-control" id="alt_holder_name" name="alt_holder_name"
+                 placeholder="e.g. Alexander Hayes"
+                 value="{{ form_data.get('alt_holder_name', '') }}" required>
+          <div class="form-hint">Should match the customer name or provide legal authorization.</div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="alt_bank_or_provider">Receiving Bank / Platform Name</label>
+          <input type="text" class="form-control" id="alt_bank_or_provider" name="alt_bank_or_provider"
+                 placeholder="e.g. Cascade Federal Credit Union or Google Pay"
+                 value="{{ form_data.get('alt_bank_or_provider', '') }}">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="alt_details">Replacement Destination Identifier <span class="required">*</span></label>
+          <input type="text" class="form-control" id="alt_details" name="alt_details"
+                 placeholder="e.g. Routing: 021000021 | Account No: 1234567890"
+                 value="{{ form_data.get('alt_details', '') }}" required>
+          <div class="form-hint" id="alt_details_hint">
+            Provide valid Routing/IFSC Code and your new active Account Number.
+          </div>
+        </div>
+      </div>
+
+      <!-- Legal Declaration & Approval Policy Notice -->
+      <div class="form-checkbox">
+        <input type="checkbox" id="declaration" name="declaration" value="yes" required>
+        <label for="declaration">
+          <strong>Mandatory Verification Acknowledgment:</strong> I declare that the original refund destination account
+          is permanently closed or inaccessible. I explicitly understand and agree that <em>the alternative refund destination
+          must be verified and approved by the authorized payment provider</em> before any refund funds can be disbursed.
+        </label>
+      </div>
+
+      <!-- Submit Button -->
+      <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary" id="submitBtn">
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          Validate &amp; Submit Request
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+{% endblock %}

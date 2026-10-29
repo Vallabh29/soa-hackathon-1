@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}About &amp; Project Documentation - Refund Destination Closed Account{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto;">
+
+  <!-- Hero Title Card -->
+  <div class="card">
+    <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.5rem;">
+      <span class="hero-tag" style="background: var(--primary-light); color: var(--primary); border-color: var(--primary-border);">
+        College Mini-Project Documentation
+      </span>
+      <h1 style="font-size: 1.85rem; font-weight: 800; color: var(--secondary); margin-top: 0.5rem;">
+        Refund Destination Closed Account System
+      </h1>
+      <p style="color: var(--text-muted); font-size: 1rem;">
+        An educational web application demonstrating how fintech platforms and merchants handle
+        refund disbursements when the customer's original receiving bank account or card is permanently closed.
+      </p>
+    </div>
+
+    <!-- Demonstration Warning -->
+    <div class="security-notice">
+      <div class="security-notice-icon">🛡️</div>
+      <div class="security-notice-text">
+        <h4>Demonstration Safeguards</h4>
+        <p>
+          This is an academic mini-project prototype. It does not connect to live banking networks or payment gateways.
+          It strictly adheres to safety guidelines: no passwords, CVVs, or OTPs are requested or stored, and no automated money movement occurs.
+        </p>
+      </div>
+    </div>
+
+    <!-- Section 1: The Problem -->
+    <div class="form-section-title">
+      1. The Real-World Problem
+    </div>
+    <p style="margin-bottom: 1rem; color: var(--text-main); font-size: 0.95rem;">
+      Standard electronic payment gateways (such as Stripe, PayPal, Razorpay, or direct merchant acquirers) are designed
+      by default to <strong>refund funds strictly to the original source instrument</strong> to prevent anti-money laundering (AML) and refund diversion fraud.
+    </p>
+    <p style="margin-bottom: 1.5rem; color: var(--text-main); font-size: 0.95rem;">
+      However, if the customer closed their bank account, cancelled their card, or their branch was merged prior to the return:
+    </p>
+
+    <div class="grid-3" style="margin-bottom: 1.5rem;">
+      <div style="background: var(--bg-subtle); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+        <h4 style="color: var(--secondary); margin-bottom: 0.4rem; font-size: 0.95rem;">ACH Return Code R02</h4>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">
+          In US and international direct bank transfers, a closed account triggers an automated return notification back to the originator.
+        </p>
+      </div>
+
+      <div style="background: var(--bg-subtle); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+        <h4 style="color: var(--secondary); margin-bottom: 0.4rem; font-size: 0.95rem;">Trapped Merchant Balances</h4>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">
+          The funds return to the merchant's holding account as unallocated balances, requiring manual customer outreach.
+        </p>
+      </div>
+
+      <div style="background: var(--bg-subtle); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+        <h4 style="color: var(--secondary); margin-bottom: 0.4rem; font-size: 0.95rem;">Verification Bottlenecks</h4>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">
+          Fintech regulations prohibit disbursing refunds to a third party without identity matching and authorized provider verification.
+        </p>
+      </div>
+    </div>
+
+    <!-- Section 2: Solution Architecture -->
+    <div class="form-section-title">
+      2. How This System Solves It
+    </div>
+    <p style="margin-bottom: 1rem; color: var(--text-main); font-size: 0.95rem;">
+      This portal establishes a standardized, auditable workflow between the customer, the merchant, and payment operations:
+    </p>
+
+    <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.5rem;">
+      <ol style="padding-left: 1.5rem; display: grid; gap: 0.75rem; font-size: 0.92rem; color: var(--text-main);">
+        <li>
+          <strong>Structured Self-Service Form:</strong> The customer supplies their transaction ID, confirms the closed account reason, and provides active alternative payment coordinates.
+        </li>
+        <li>
+          <strong>Validation Rules:</strong> The system enforces that the account status is explicitly identified as closed. If an active account is selected, the submission is rejected with guidance to wait for the standard refund.
+        </li>
+        <li>
+          <strong>Persistent SQLite Storage:</strong> All requests are saved with audit timestamps, customer contact info, and security-sanitized metadata.
+        </li>
+        <li>
+          <strong>Administrative Oversight:</strong> Payment operations review return logs, verify destination ownership, and transition the request through <code>Pending</code> &rarr; <code>Under Review</code> &rarr; <code>Approved</code> &rarr; <code>Resolved</code>.
+        </li>
+        <li>
+          <strong>Real-Time Tracking &amp; Guidance:</strong> Customers track their Request ID with tailored advice explaining what is occurring at each stage.
+        </li>
+      </ol>
+    </div>
+
+    <!-- Section 3: Technical Specifications -->
+    <div class="form-section-title">
+      3. Technical Specifications
+    </div>
+    <div class="detail-grid">
+      <div class="detail-item">
+        <div class="detail-label">Frontend</div>
+        <div class="detail-value">Semantic HTML5, Responsive Vanilla CSS3, Modern JavaScript</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Backend Framework</div>
+        <div class="detail-value">Python 3.12 + Flask 3.1</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Database</div>
+        <div class="detail-value">SQLite3 (Embedded Relational DB)</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Security &amp; Styling</div>
+        <div class="detail-value">Zero External CDN Dependencies (100% Offline Capable)</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

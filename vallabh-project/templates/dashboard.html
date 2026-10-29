@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Refund Destination Closed Account{% endblock %}
+
+{% block content %}
+<div>
+  <!-- Dashboard Header -->
+  <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 2rem;">
+    <div>
+      <h1 style="font-size: 1.85rem; font-weight: 800; color: var(--secondary);">
+        Refund Management Dashboard
+      </h1>
+      <p style="color: var(--text-muted); font-size: 0.95rem;">
+        Monitor, review, and process re-routed refunds for closed destination accounts.
+      </p>
+    </div>
+
+    <div>
+      <a href="{{ url_for('submit_refund') }}" class="btn btn-primary">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        New Request
+      </a>
+    </div>
+  </div>
+
+  <!-- Metric Statistics Cards -->
+  <div class="grid-4" style="margin-bottom: 2rem;">
+    <div class="stat-card">
+      <div class="stat-info">
+        <div class="stat-label">Total Requests</div>
+        <div class="stat-value">{{ stats.total_count }}</div>
+      </div>
+      <div class="stat-icon total">
+        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-info">
+        <div class="stat-label">Pending Verification</div>
+        <div class="stat-value">{{ stats.pending_count }}</div>
+      </div>
+      <div class="stat-icon pending">
+        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-info">
+        <div class="stat-label">Under Review</div>
+        <div class="stat-value">{{ stats.review_count }}</div>
+      </div>
+      <div class="stat-icon review">
+        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-info">
+        <div class="stat-label">Approved &amp; Resolved</div>
+        <div class="stat-value">{{ stats.approved_count + stats.resolved_count }}</div>
+      </div>
+      <div class="stat-icon resolved">
+        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data Table Container -->
+  <div class="card">
+    <div class="filter-bar">
+      <!-- Status Filter Pills -->
+      <div class="filter-pills">
+        <a href="{{ url_for('dashboard', status='all', search=search_query) }}"
+           class="filter-pill {% if current_status == 'all' or not current_status %}active{% endif %}">
+          All ({{ stats.total_count }})
+        </a>
+        <a href="{{ url_for('dashboard', status='Pending', search=search_query) }}"
+           class="filter-pill {% if current_status == 'Pending' %}active{% endif %}">
+          Pending ({{ stats.pending_count }})
+        </a>
+        <a href="{{ url_for('dashboard', status='Under Review', search=search_query) }}"
+           class="filter-pill {% if current_status == 'Under Review' %}active{% endif %}">
+          Under Review ({{ stats.review_count }})
+        </a>
+        <a href="{{ url_for('dashboard', status='Approved', search=search_query) }}"
+           class="filter-pill {% if current_status == 'Approved' %}active{% endif %}">
+          Approved ({{ stats.approved_count }})
+        </a>
+        <a href="{{ url_for('dashboard', status='Resolved', search=search_query) }}"
+           class="filter-pill {% if current_status == 'Resolved' %}active{% endif %}">
+          Resolved ({{ stats.resolved_count }})
+        </a>
+      </div>
+
+      <!-- Quick Search Form -->
+      <form method="GET" action="{{ url_for('dashboard') }}" style="display: flex; gap: 0.5rem;">
+        <input type="hidden" name="status" value="{{ current_status }}">
+        <input type="text" name="search" class="form-control" style="width: 220px; padding: 0.45rem 0.75rem; font-size: 0.88rem;"
+               placeholder="Search requests..." value="{{ search_query }}">
+        <button type="submit" class="btn btn-secondary btn-sm">Filter</button>
+        {% if search_query %}
+          <a href="{{ url_for('dashboard', status=current_status) }}" class="btn btn-secondary btn-sm" title="Clear Search">&times;</a>
+        {% endif %}
+      </form>
+    </div>
+
+    <!-- Table of Requests -->
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Request ID</th>
+            <th>Customer</th>
+            <th>Amount</th>
+            <th>Original Destination</th>
+            <th>Alternative Destination</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if requests %}
+            {% for req in requests %}
+              {% set status_class = 'pending' %}
+              {% if req.status == 'Under Review' %}
+                {% set status_class = 'under-review' %}
+              {% elif req.status == 'Approved' %}
+                {% set status_class = 'approved' %}
+              {% elif req.status == 'Resolved' %}
+                {% set status_class = 'resolved' %}
+              {% endif %}
+              <tr>
+                <td>
+                  <a href="{{ url_for('view_status', request_id=req.request_id) }}" style="font-weight: 700;">
+                    {{ req.request_id }}
+                  </a>
+                  <div style="font-size: 0.75rem; color: var(--text-muted);">{{ req.transaction_id }}</div>
+                </td>
+                <td>
+                  <div style="font-weight: 600;">{{ req.customer_name }}</div>
+                  <div style="font-size: 0.78rem; color: var(--text-muted);">{{ req.email }}</div>
+                </td>
+                <td style="font-weight: 700; color: var(--secondary);">
+                  {{ req.currency }}{{ "%.2f"|format(req.refund_amount) }}
+                </td>
+                <td>
+                  <div style="font-size: 0.85rem;">{{ req.original_bank_name }} (&bull;&bull;&bull;&bull; {{ req.original_account_last4 }})</div>
+                  <div style="font-size: 0.75rem; color: #dc2626;">{{ req.account_status }}</div>
+                </td>
+                <td>
+                  <div style="font-size: 0.85rem;">{{ req.alt_method }}</div>
+                  <div style="font-size: 0.75rem; color: var(--text-muted);">Holder: {{ req.alt_holder_name }}</div>
+                </td>
+                <td>
+                  <span class="badge-status badge-{{ status_class }}">
+                    <span class="dot-indicator"></span>
+                    {{ req.status }}
+                  </span>
+                </td>
+                <td style="font-size: 0.82rem; color: var(--text-muted); white-space: nowrap;">
+                  {{ req.created_at[:10] }}
+                </td>
+                <td>
+                  <div style="display: flex; gap: 0.4rem;">
+                    <a href="{{ url_for('view_status', request_id=req.request_id) }}" class="btn btn-secondary btn-sm" title="View details">
+                      View
+                    </a>
+                    <button type="button" class="btn btn-primary btn-sm"
+                            onclick="openStatusModal('{{ req.request_id }}', '{{ req.status }}', `{{ req.admin_notes | replace('`', '') }}`)"
+                            title="Update Status">
+                      Edit
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="8" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+                No refund requests found matching the selected filter.
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Summary Count Footer -->
+    <div style="padding-top: 1rem; font-size: 0.85rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;">
+      <span>Showing {{ requests|length }} request(s)</span>
+      <span>Total Tracked Payout Value: <strong>${{ "%.2f"|format(stats.total_amount) }}</strong></span>
+    </div>
+  </div>
+</div>
+
+<!-- Reusable Admin Status Update Modal -->
+<div class="modal-backdrop" id="statusModal">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h3>Update Status: <span id="modalRequestIdSpan"></span></h3>
+      <button type="button" class="modal-close-btn" id="modalCloseBtn">&times;</button>
+    </div>
+    <form method="POST" action="{{ url_for('update_status') }}">
+      <div class="modal-body">
+        <input type="hidden" name="request_id" id="modalRequestIdInput">
+        <input type="hidden" name="redirect_to" value="dashboard">
+
+        <div class="form-group">
+          <label class="form-label" for="modalStatusSelect">New Workflow Status</label>
+          <select name="status" id="modalStatusSelect" class="form-control" required>
+            <option value="Pending">Pending</option>
+            <option value="Under Review">Under Review</option>
+            <option value="Approved">Approved</option>
+            <option value="Resolved">Resolved</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="modalNotesTextarea">Official Admin / Audit Remarks</label>
+          <textarea name="admin_notes" id="modalNotesTextarea" class="form-control" rows="3"
+                    placeholder="Provide details regarding bank confirmation or approval..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="modalCancelBtn">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save &amp; Update Status</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
